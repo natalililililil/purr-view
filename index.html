@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+<title>Тренажёр для глаз</title>
+<meta name="description" content="Тренажёр для глаз с котиком: моргание, движения глазами и фокусировка 20-20-20" />
+<meta name="theme-color" content="#2b1a4a" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" href="assets/icons/icon-192.png" />
+<link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div id="app">
+
+  <!-- HOME SCREEN -->
+  <section class="screen" id="screen-home" data-screen>
+    <header class="home-header">
+      <div class="mascot" aria-hidden="true">
+        <img class="mascot-img" src="assets/cat_preview.png" alt="" />
+      </div>
+      <h1>Тренажёр для глаз</h1>
+      <p class="subtitle">Выбери упражнение — котик будет тренироваться вместе с тобой</p>
+    </header>
+
+    <div class="card-grid">
+      <button class="ex-card" data-goto="blink">
+        <span class="ex-icon" data-icon="blink"></span>
+        <span class="ex-title">Моргание</span>
+        <span class="ex-desc">Снимает сухость глаз</span>
+      </button>
+      <button class="ex-card" data-goto="updown">
+        <span class="ex-icon" data-icon="updown"></span>
+        <span class="ex-title">Вверх-вниз</span>
+        <span class="ex-desc">Вертикальные движения</span>
+      </button>
+      <button class="ex-card" data-goto="leftright">
+        <span class="ex-icon" data-icon="leftright"></span>
+        <span class="ex-title">Влево-вправо</span>
+        <span class="ex-desc">Горизонтальные движения</span>
+      </button>
+      <button class="ex-card" data-goto="circular">
+        <span class="ex-icon" data-icon="circular"></span>
+        <span class="ex-title">По кругу</span>
+        <span class="ex-desc">Круговые движения</span>
+      </button>
+      <button class="ex-card ex-card-wide" data-goto="focus">
+        <span class="ex-icon" data-icon="focus"></span>
+        <span class="ex-text">
+          <span class="ex-title">Фокус 20-20-20</span>
+          <span class="ex-desc">Вблизи / вдаль — снимает напряжение</span>
+        </span>
+      </button>
+    </div>
+
+    <button class="settings-btn" id="settingsBtn" aria-label="Настройки">
+      <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M19.14 12.94a7.14 7.14 0 0 0 .06-.94 7.14 7.14 0 0 0-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.3 7.3 0 0 0-1.62-.94l-.36-2.54a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.5.42l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96a.5.5 0 0 0-.6.22L1.71 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.62-.06.94s.02.63.06.94l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.14.24.42.32.66.22l2.39-.96c.49.38 1.03.7 1.62.94l.36 2.54c.05.24.25.42.5.42h3.84c.25 0 .45-.18.5-.42l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.24.1.52.02.66-.22l1.92-3.32a.5.5 0 0 0-.12-.64ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z"/></svg>
+    </button>
+  </section>
+
+  <!-- EXERCISE SCREEN (shared template, content swapped by JS) -->
+  <section class="screen" id="screen-exercise" data-screen>
+    <header class="ex-header">
+      <button class="back-btn" id="backBtn" aria-label="Назад">
+        <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M15.5 4.5 8 12l7.5 7.5 1.4-1.4L10.8 12l6.1-6.1z"/></svg>
+      </button>
+      <h2 id="exTitle">Упражнение</h2>
+      <div class="header-spacer"></div>
+    </header>
+
+    <div class="stage" id="stage">
+      <div class="progress-ring-wrap">
+        <svg class="progress-ring" viewBox="0 0 120 120">
+          <circle class="ring-bg" cx="60" cy="60" r="52"/>
+          <circle class="ring-fg" id="ringFg" cx="60" cy="60" r="52"/>
+        </svg>
+        <div class="ring-center">
+          <span id="timeLabel">00:30</span>
+        </div>
+      </div>
+
+      <div class="play-area" id="playArea">
+        <!-- per-exercise visuals injected here -->
+      </div>
+
+      <div class="prompt" id="promptLabel">Готовы начать?</div>
+    </div>
+
+    <div class="controls" id="setupControls">
+      <div class="option-row">
+        <span class="option-label">Длительность</span>
+        <div class="chip-group" id="durationChips" data-kind="duration">
+          <button class="chip" data-value="30">30с</button>
+          <button class="chip" data-value="60">1м</button>
+          <button class="chip" data-value="120">2м</button>
+          <button class="chip" data-value="300">5м</button>
+        </div>
+      </div>
+      <div class="option-row" id="speedRow">
+        <span class="option-label">Скорость</span>
+        <div class="chip-group" id="speedChips" data-kind="speed">
+          <button class="chip" data-value="slow">Медленно</button>
+          <button class="chip" data-value="medium">Средне</button>
+          <button class="chip" data-value="fast">Быстро</button>
+        </div>
+      </div>
+      <button class="primary-btn" id="startBtn">Начать</button>
+    </div>
+
+    <div class="controls controls-run hidden" id="runControls">
+      <button class="icon-btn" id="pauseBtn" aria-label="Пауза">
+        <svg viewBox="0 0 24 24" width="26" height="26"><path fill="currentColor" d="M8 5h3v14H8zM13 5h3v14h-3z"/></svg>
+      </button>
+      <button class="icon-btn danger" id="stopBtn" aria-label="Стоп">
+        <svg viewBox="0 0 24 24" width="26" height="26"><path fill="currentColor" d="M6 6h12v12H6z"/></svg>
+      </button>
+    </div>
+
+    <div class="controls controls-done hidden" id="doneControls">
+      <p class="done-text">Отлично! Глазки говорят спасибо 💜</p>
+      <div class="done-row">
+        <button class="secondary-btn" id="repeatBtn">Повторить</button>
+        <button class="primary-btn" id="homeBtn">На главную</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETTINGS SHEET -->
+  <div class="sheet-overlay hidden" id="settingsOverlay">
+    <div class="sheet">
+      <h3>Настройки</h3>
+      <label class="toggle-row">
+        <span>Звук подсказок</span>
+        <input type="checkbox" id="soundToggle" />
+        <span class="switch"></span>
+      </label>
+      <label class="toggle-row">
+        <span>Вибрация</span>
+        <input type="checkbox" id="vibrateToggle" />
+        <span class="switch"></span>
+      </label>
+      <button class="primary-btn" id="closeSettings">Готово</button>
+    </div>
+  </div>
+
+</div>
+<script src="js/app.js"></script>
+</body>
+</html>
