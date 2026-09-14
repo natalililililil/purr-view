@@ -121,7 +121,7 @@
           const rect = playArea.getBoundingClientRect();
           const usableH = rect.height * 0.8;
           const top = rect.height * 0.1;
-          const phase = (t % period) / period; // 0..1
+          const phase = (t % period) / period;
           const y = top + (Math.sin(phase * Math.PI * 2 - Math.PI / 2) * 0.5 + 0.5) * usableH;
           const x = rect.width / 2;
           mover.style.transform = `translate(${x - 17}px, ${y - 17}px)`;
@@ -266,7 +266,7 @@
   }
 
   // ---------- run state ----------
-  let current = null; // exercise key
+  let current = null;
   let def = null;
   let totalMs = 0;
   let elapsedMs = 0;
@@ -290,12 +290,10 @@
     exTitle.textContent = def.title;
     speedRow.style.display = def.hasSpeed ? "" : "none";
 
-    // duration chips
     const savedDur = prefs.duration[key] || 60;
     [...durationChips.children].forEach((c) => {
       c.classList.toggle("selected", Number(c.dataset.value) === savedDur);
     });
-    // speed chips
     const savedSpeed = prefs.speed[key] || "medium";
     [...speedChips.children].forEach((c) => {
       c.classList.toggle("selected", c.dataset.value === savedSpeed);
@@ -305,13 +303,10 @@
     runControls.classList.add("hidden");
     doneControls.classList.add("hidden");
 
-    // the screen must be visible (not display:none) before we measure the
-    // play area, otherwise getBoundingClientRect reads a collapsed 0x0 box
     showScreen("exercise");
 
     def.build(playArea);
     if (def.hasSpeed) {
-      // render one static frame so the dot previews on its track before Start is pressed
       def.startMotion(playArea, savedSpeed)(0);
       promptLabel.classList.remove("pulse");
     }
@@ -472,6 +467,109 @@
     savePrefs();
     if (prefs.vibrate) buzz(40);
   });
+
+  // ---------- eye fatigue assessment logic ----------
+  const ASSESSMENT_KEY = "eyeTrainer.assessment.v1";
+  const ASSESSMENT_QUESTIONS = [
+    { id: 'dryness', q: 'Сухость, рези или «песок» в глазах?', options: [{label:'Нет',score:0}, {label:'Иногда',score:1}, {label:'Постоянно',score:2}] },
+    { id: 'clarity', q: 'Текст расплывается или двоится?', options: [{label:'Всё чётко',score:0}, {label:'Плывет к концу',score:1}, {label:'Трудно фокус',score:2}] },
+    { id: 'light', q: 'Режет ли глаза от яркого света?', options: [{label:'Нет',score:0}, {label:'Жмурюсь',score:1}, {label:'Очень ярко',score:2}] },
+    { id: 'weight', q: 'Есть ли напряжение или головная боль в области лба/висков?', options: [{label:'Нет',score:0}, {label:'К концу дня',score:1}, {label:'Да',score:2}] }
+  ];
+  let assessmentState = JSON.parse(localStorage.getItem(ASSESSMENT_KEY) || "{}");
+  let quickExTarget = null;
+
+  function renderAssessmentForm() {
+    const container = document.getElementById("assessmentSteps");
+    container.innerHTML = ASSESSMENT_QUESTIONS.map(item => `
+      <div class="assessment-question" data-qid="${item.id}">
+        <span class="assessment-question-text">${item.q}</span>
+        <div class="assessment-options">
+          ${item.options.map((opt, idx) => `
+            <button class="assessment-option ${assessmentState[item.id] === opt.score ? 'selected' : ''}" data-score="${opt.score}" data-idx="${idx}">${opt.label}</button>
+          `).join('')}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function updateAssessmentBanner(score) {
+    const dot = document.getElementById("assessmentDot");
+    const statusText = document.getElementById("assessmentStatusText");
+    if (score === undefined) return;
+    if (score <= 2) {
+      dot.textContent = "🟢";
+      statusText.textContent = "Все хорошо (0–2 балла)";
+    } else if (score <= 5) {
+      dot.textContent = "🟡";
+      statusText.textContent = "Умеренная усталость (3–5 баллов)";
+    } else {
+      dot.textContent = "🔴";
+      statusText.textContent = "Требуется перерыв (6+ баллов)";
+    }
+  }
+
+  function evaluateAssessment() {
+    const score = ASSESSMENT_QUESTIONS.reduce((acc, q) => acc + (assessmentState[q.id] ?? 0), 0);
+    localStorage.setItem(ASSESSMENT_KEY, JSON.stringify(assessmentState));
+    updateAssessmentBanner(score);
+
+    const recBlock = document.getElementById("assessmentRecBlock");
+    const recBadge = document.getElementById("recBadge");
+    const recText = document.getElementById("recText");
+    const quickBtn = document.getElementById("quickExBtn");
+    recBlock.classList.remove("hidden");
+
+    if (score <= 2) {
+      recBadge.textContent = "🟢 Зелёная зона";
+      recText.textContent = "Всё хорошо, просто попей водички.";
+      quickBtn.classList.add("hidden");
+    } else if (score <= 5) {
+      recBadge.textContent = "🟡 Жёлтая зона";
+      recText.textContent = "Лови разминку для глаз (Моргание).";
+      quickExTarget = "blink";
+      quickBtn.classList.remove("hidden");
+    } else {
+      recBadge.textContent = "🔴 Красная зона";
+      recText.textContent = "Аварийный режим: фокус 20-20-20 и уходим от экрана на 5 минут.";
+      quickExTarget = "focus";
+      quickBtn.classList.remove("hidden");
+    }
+  }
+
+ document.getElementById("openAssessmentBtn").addEventListener("click", () => {
+    document.getElementById("assessmentRecBlock").classList.add("hidden");
+    document.getElementById("quickExBtn").classList.add("hidden");
+    renderAssessmentForm();
+    document.getElementById("assessmentOverlay").classList.remove("hidden");
+  });
+  document.getElementById("closeAssessment").addEventListener("click", () => {
+    document.getElementById("assessmentOverlay").classList.add("hidden");
+  });
+  document.getElementById("assessmentOverlay").addEventListener("click", (e) => {
+    if (e.target === document.getElementById("assessmentOverlay")) {
+      document.getElementById("assessmentOverlay").classList.add("hidden");
+    }
+  });
+  document.getElementById("assessmentSteps").addEventListener("click", (e) => {
+    const btn = e.target.closest(".assessment-option");
+    if (!btn) return;
+    const qEl = btn.closest(".assessment-question");
+    const qid = qEl.dataset.qid;
+    qEl.querySelectorAll(".assessment-option").forEach(o => o.classList.remove("selected"));
+    btn.classList.add("selected");
+    assessmentState[qid] = Number(btn.dataset.score);
+  });
+  document.getElementById("submitAssessment").addEventListener("click", evaluateAssessment);
+  document.getElementById("quickExBtn").addEventListener("click", () => {
+    document.getElementById("assessmentOverlay").classList.add("hidden");
+    if (quickExTarget) setupExercise(quickExTarget);
+  });
+
+  if (Object.keys(assessmentState).length > 0) {
+    const initScore = ASSESSMENT_QUESTIONS.reduce((acc, q) => acc + (assessmentState[q.id] ?? 0), 0);
+    updateAssessmentBanner(initScore);
+  }
 
   // ---------- PWA service worker ----------
   if ("serviceWorker" in navigator) {

@@ -36,6 +36,10 @@ html, body {
   background: radial-gradient(ellipse at 50% -10%, var(--surface) 0%, var(--bg) 55%);
 }
 
+.hidden {
+  display: none !important;
+}
+
 button {
   font-family: inherit;
   color: inherit;
@@ -48,11 +52,17 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .screen {
   display: none;
   flex-direction: column;
+  align-items: center;
   min-height: 100vh;
   min-height: 100dvh;
   padding: calc(20px + var(--safe-top)) 20px calc(20px + var(--safe-bottom));
 }
 .screen.active { display: flex; }
+
+.screen > * {
+  width: 100%;
+  max-width: 480px;
+}
 
 /* the exercise screen must always fit in one viewport: the moving point
    should never end up scrolled below the fold */
@@ -60,6 +70,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   height: 100vh;
   height: 100dvh;
   overflow-y: auto;
+  justify-content: flex-start;
 }
 
 /* ---------- Home ---------- */
@@ -332,11 +343,13 @@ h1 { font-size: 22px; margin: 4px 0 6px; letter-spacing: .2px; }
   position: fixed; inset: 0;
   background: rgba(10,5,20,0.55);
   display: flex; align-items: flex-end;
+  justify-content: center;
   z-index: 20;
 }
 .sheet-overlay.hidden { display: none; }
 .sheet {
   width: 100%;
+  max-width: 480px;
   background: var(--surface);
   border-radius: 24px 24px 0 0;
   padding: 20px 20px calc(20px + var(--safe-bottom));
@@ -371,4 +384,66 @@ h1 { font-size: 22px; margin: 4px 0 6px; letter-spacing: .2px; }
   .screen { align-items: center; }
   #screen-home, #screen-exercise { width: 100%; max-width: 480px; margin: 0 auto; }
   #screen-exercise { justify-content: center; }
+  
+  .sheet-overlay {
+    align-items: center;
+    padding: 20px;
+  }
+  .sheet {
+    border-radius: 24px;
+    max-height: 85vh;
+  }
 }
+
+.assessment-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  background: linear-gradient(160deg, var(--surface) 0%, var(--surface-2) 100%);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-top: 18px;
+  text-align: left;
+  transition: transform .12s ease;
+  cursor: pointer;
+}
+.assessment-banner:active { transform: scale(0.97); }
+.assessment-dot { font-size: 20px; }
+.assessment-info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.assessment-title { font-size: 14px; font-weight: 600; }
+.assessment-desc { font-size: 12px; color: var(--text-muted); }
+.assessment-arrow { color: var(--text-muted); font-size: 16px; }
+
+.assessment-sheet { max-height: 85vh; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+.assessment-steps { display: flex; flex-direction: column; gap: 14px; }
+.assessment-question { display: flex; flex-direction: column; gap: 6px; }
+.assessment-question-text { font-size: 13px; color: var(--text-muted); }
+.assessment-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.assessment-option {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 8px 4px;
+  font-size: 12px;
+  text-align: center;
+  cursor: pointer;
+}
+.assessment-option.selected {
+  background: var(--primary-dark);
+  border-color: var(--accent);
+  color: var(--white);
+}
+.assessment-rec {
+  background: rgba(0,0,0,0.25);
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rec-badge { font-weight: 600; font-size: 14px; }
+.rec-text { font-size: 13px; color: var(--text-muted); margin: 0; line-height: 1.4; }
+.assessment-actions { display: flex; gap: 10px; }
+.assessment-actions button { flex: 1; }
