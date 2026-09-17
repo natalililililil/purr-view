@@ -42,8 +42,8 @@
       </button>
       <button class="ex-card" data-goto="circular">
         <span class="ex-icon" data-icon="circular"></span>
-        <span class="ex-title">По кругу</span>
-        <span class="ex-desc">Круговые движения</span>
+        <span class="ex-title">Вращение</span>
+        <span class="ex-desc">Движение по часовой стрелке</span>
       </button>
       <button class="ex-card ex-card-wide" data-goto="focus">
         <span class="ex-icon" data-icon="focus"></span>
@@ -74,7 +74,9 @@
         <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M15.5 4.5 8 12l7.5 7.5 1.4-1.4L10.8 12l6.1-6.1z"/></svg>
       </button>
       <h2 id="exTitle">Упражнение</h2>
-      <div class="header-spacer"></div>
+      <button class="info-btn" id="infoBtn" aria-label="Инструкция">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 11.9 12 12.5 12 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.03-.42 1.98-1.03 2.75z"/></svg>
+      </button>
     </header>
 
     <div class="stage" id="stage">
@@ -166,7 +168,18 @@
       </div>
     </div>
   </div>
-
+  <div class="sheet-overlay hidden" id="infoOverlay">
+    <div class="sheet info-sheet">
+      <h3 id="infoTitle">Как выполнять</h3>
+      <p id="infoDesc" class="info-desc-text"></p>
+      <label class="toggle-row info-checkbox-row">
+        <span>Больше не показывать</span>
+        <input type="checkbox" id="dontShowToggle" />
+        <span class="switch"></span>
+      </label>
+      <button class="primary-btn" id="closeInfoBtn">Понятно</button>
+    </div>
+  </div>
 </div>
 <script src="js/app.js"></script>
 </body>

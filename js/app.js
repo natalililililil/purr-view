@@ -165,7 +165,7 @@
       },
     },
     circular: {
-      title: "По кругу",
+      title: "Вращение",
       hasSpeed: true,
       prompts: [],
       build(playArea) {
@@ -410,10 +410,73 @@
     setupExercise(current);
   }
 
-  // ---------- events ----------
-  document.querySelectorAll("[data-goto]").forEach((btn) => {
-    btn.addEventListener("click", () => setupExercise(btn.dataset.goto));
+  const exerciseInfoData = {
+    blink: {
+      title: "Моргание",
+      desc: "Моргайте каждый раз, когда темнеет экран. Частое моргание помогает равномерно распределить слезную пленку по поверхности глаза, защищая его от пересыхания при работе за экраном."
+    },
+    updown: {
+      title: "Вверх-вниз",
+      desc: "Медленно переводите взгляд максимально вверх, а затем максимально вниз. Это снимает утомление с вертикальных прямых мышц глаза."
+    },
+    leftright: {
+      title: "Влево-вправо",
+      desc: "Двигайте глазами до упора влево, а затем вправо, не поворачивая голову. Упражнение улучшает подвижность глазных яблок и помогает разгрузить мышцы при монотонной работе с текстом."
+    },
+    circular: {
+      title: "Вращение",
+      desc: "Совершайте плавные круговые движения глазами по часовой стрелке. Улучшает общую подвижность."
+    },
+    focus: {
+      title: "Фокус 20-20-20",
+      desc: "Следите за точкой, которая плавно меняет размер: переводите взгляд с близкого фокуса на удаленный. Это отлично тренирует аккомодацию и снимает напряжение."
+    }
+  };
+
+  let currentExId = null;
+
+  function checkAndShowInfo(exId) {
+    currentExId = exId;
+    const info = exerciseInfoData[exId];
+    if (!info) return;
+
+    document.getElementById('infoTitle').textContent = info.title;
+    document.getElementById('infoDesc').textContent = info.desc;
+
+    const dontShow = localStorage.getItem(`dontShowInfo_${exId}`) === 'true';
+    document.getElementById('dontShowToggle').checked = dontShow;
+
+    if (!dontShow) {
+      document.getElementById('infoOverlay').classList.remove('hidden');
+    }
+  }
+
+  document.getElementById('infoBtn').addEventListener('click', () => {
+    const info = exerciseInfoData[currentExId];
+    if (info) {
+      document.getElementById('infoTitle').textContent = info.title;
+      document.getElementById('infoDesc').textContent = info.desc;
+      document.getElementById('dontShowToggle').checked = localStorage.getItem(`dontShowInfo_${currentExId}`) === 'true';
+      document.getElementById('infoOverlay').classList.remove('hidden');
+    }
   });
+
+  document.getElementById('closeInfoBtn').addEventListener('click', () => {
+    const dontShow = document.getElementById('dontShowToggle').checked;
+    if (currentExId) {
+      localStorage.setItem(`dontShowInfo_${currentExId}`, dontShow);
+    }
+    document.getElementById('infoOverlay').classList.add('hidden');
+  });
+
+  document.querySelectorAll("[data-goto]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const exId = btn.dataset.goto;
+      setupExercise(exId);
+      checkAndShowInfo(exId);
+    });
+  });
+
   document.getElementById("backBtn").addEventListener("click", () => {
     running = false;
     cancelAnimationFrame(rafId);
@@ -541,7 +604,7 @@
     }
   }
 
- document.getElementById("openAssessmentBtn").addEventListener("click", () => {
+  document.getElementById("openAssessmentBtn").addEventListener("click", () => {
     document.getElementById("assessmentRecBlock").classList.add("hidden");
     document.getElementById("quickExBtn").classList.add("hidden");
     renderAssessmentForm();
@@ -567,7 +630,10 @@
   document.getElementById("submitAssessment").addEventListener("click", evaluateAssessment);
   document.getElementById("quickExBtn").addEventListener("click", () => {
     document.getElementById("assessmentOverlay").classList.add("hidden");
-    if (quickExTarget) setupExercise(quickExTarget);
+    if (quickExTarget) {
+      setupExercise(quickExTarget);
+      checkAndShowInfo(quickExTarget);
+    }
   });
 
   if (Object.keys(assessmentState).length > 0) {
