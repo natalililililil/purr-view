@@ -5,6 +5,7 @@
   const STORAGE_KEY = "eyeTrainer.v1";
   const defaultState = {
     sound: false,
+    music: true,
     vibrate: true,
     duration: { blink: 60, updown: 60, leftright: 60, circular: 60, focus: 120 },
     speed: { updown: "medium", leftright: "medium", circular: "medium" },
@@ -16,6 +17,7 @@
       const parsed = JSON.parse(raw);
       return {
         sound: parsed.sound ?? defaultState.sound,
+        music: parsed.music ?? defaultState.music,
         vibrate: parsed.vibrate ?? defaultState.vibrate,
         duration: { ...defaultState.duration, ...(parsed.duration || {}) },
         speed: { ...defaultState.speed, ...(parsed.speed || {}) },
@@ -56,6 +58,58 @@
   function buzz(ms = 40) {
     if (!prefs.vibrate) return;
     if (navigator.vibrate) navigator.vibrate(ms);
+  }
+
+  // ---------- background music ----------
+  const bgMusic = new Audio("assets/bg-music.mp3");
+  bgMusic.loop = true;
+  bgMusic.volume = 0;
+
+  let fadeInterval = null;
+
+  function startMusic() {
+    if (!prefs.music) return;
+    
+    if (fadeInterval) clearInterval(fadeInterval);
+    
+    bgMusic.currentTime = 0;
+    bgMusic.volume = 0;
+    bgMusic.play().catch(() => {});
+
+    const targetVolume = 0.35;
+    const durationMs = 3500;
+    const stepMs = 50;
+    const steps = durationMs / stepMs;
+    const volumeStep = targetVolume / steps;
+
+    fadeInterval = setInterval(() => {
+      if (bgMusic.volume < targetVolume - volumeStep) {
+        bgMusic.volume = Math.min(targetVolume, bgMusic.volume + volumeStep);
+      } else {
+        bgMusic.volume = targetVolume;
+        clearInterval(fadeInterval);
+        fadeInterval = null;
+      }
+    }, stepMs);
+  }
+
+  function stopMusic() {
+    if (fadeInterval) clearInterval(fadeInterval);
+    fadeInterval = null;
+    bgMusic.pause();
+    bgMusic.currentTime = 0;
+  }
+
+  function pauseMusic() {
+    if (fadeInterval) clearInterval(fadeInterval);
+    fadeInterval = null;
+    bgMusic.pause();
+  }
+
+  function resumeMusic() {
+    if (!prefs.music) return;
+    bgMusic.play().catch(() => {});
+    bgMusic.volume = 0.35; 
   }
 
   // ---------- icons ----------
@@ -313,6 +367,8 @@
     runControls.classList.remove("hidden");
     promptLabel.textContent = "";
 
+    startMusic();
+
     rafId = requestAnimationFrame(loop);
   }
 
@@ -342,6 +398,7 @@
   function finishRun() {
     running = false;
     cancelAnimationFrame(rafId);
+    stopMusic();
     const video = playArea.querySelector("video");
     if (video) video.pause();
     runControls.classList.add("hidden");
@@ -356,12 +413,14 @@
     pauseBtn.innerHTML = paused
       ? `<svg viewBox="0 0 24 24" width="26" height="26"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>`
       : `<svg viewBox="0 0 24 24" width="26" height="26"><path fill="currentColor" d="M8 5h3v14H8zM13 5h3v14h-3z"/></svg>`;
+    
     const video = playArea.querySelector("video");
-    if (video) {
-      if (paused) video.pause();
-      else video.play().catch(() => {});
-    }
-    if (!paused) {
+    if (paused) {
+      pauseMusic();
+      if (video) video.pause();
+    } else {
+      resumeMusic();
+      if (video) video.play().catch(() => {});
       lastTs = null;
       rafId = requestAnimationFrame(loop);
     }
@@ -371,6 +430,7 @@
     running = false;
     paused = false;
     cancelAnimationFrame(rafId);
+    stopMusic();
     setupExercise(current);
   }
 
@@ -444,11 +504,15 @@
   document.getElementById("backBtn").addEventListener("click", () => {
     running = false;
     cancelAnimationFrame(rafId);
+    stopMusic();
     const video = playArea.querySelector("video");
     if (video) video.pause();
     showScreen("home");
   });
-  homeBtn.addEventListener("click", () => showScreen("home"));
+  homeBtn.addEventListener("click", () => {
+    stopMusic();
+    showScreen("home");
+  });
   repeatBtn.addEventListener("click", () => setupExercise(current));
 
   durationChips.addEventListener("click", (e) => {
@@ -472,9 +536,13 @@
   // settings sheet
   const settingsOverlay = document.getElementById("settingsOverlay");
   const soundToggle = document.getElementById("soundToggle");
+  const musicToggle = document.getElementById("musicToggle");
   const vibrateToggle = document.getElementById("vibrateToggle");
+  
   soundToggle.checked = prefs.sound;
+  if (musicToggle) musicToggle.checked = prefs.music;
   vibrateToggle.checked = prefs.vibrate;
+
   document.getElementById("settingsBtn").addEventListener("click", () => {
     settingsOverlay.classList.remove("hidden");
   });
@@ -489,6 +557,12 @@
     savePrefs();
     if (prefs.sound) beep(660);
   });
+  if (musicToggle) {
+    musicToggle.addEventListener("change", () => {
+      prefs.music = musicToggle.checked;
+      savePrefs();
+    });
+  }
   vibrateToggle.addEventListener("change", () => {
     prefs.vibrate = vibrateToggle.checked;
     savePrefs();
