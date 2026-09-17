@@ -1,4 +1,4 @@
-const CACHE = "eye-trainer-v2";
+const CACHE = "eye-trainer-v3";
 const ASSETS = [
   "./",
   "./index.html",
@@ -8,6 +8,7 @@ const ASSETS = [
   "./assets/cat.mp4",
   "./assets/icons/icon-192.png",
   "./assets/icons/icon-512.png",
+  "./assets/bg-music.mp3"
 ];
 
 self.addEventListener("install", (e) => {
