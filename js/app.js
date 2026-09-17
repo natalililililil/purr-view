@@ -75,7 +75,6 @@
     blink: {
       title: "Моргание",
       hasSpeed: false,
-      prompts: ["Моргните", "Ещё раз", "Моргните", "Расслабьте веки"],
       cadence: 4000,
       build(playArea) {
         playArea.innerHTML = `
@@ -96,7 +95,6 @@
             flash.classList.add("go");
           }
           if (counter) counter.textContent = `Моргания: ${ctx.blinkCount}`;
-          setPrompt(pick(ctx.def.prompts));
           beep(660);
           buzz(35);
         }
@@ -105,7 +103,6 @@
     updown: {
       title: "Вверх-вниз",
       hasSpeed: true,
-      prompts: [],
       build(playArea) {
         playArea.innerHTML = `
           <div class="track-line track-vert"></div>
@@ -116,7 +113,6 @@
       startMotion(playArea, speed) {
         const mover = document.getElementById("mover");
         const period = { slow: 4200, medium: 2800, fast: 1700 }[speed] || 2800;
-        let lastPhase = null;
         return (t) => {
           const rect = playArea.getBoundingClientRect();
           const usableH = rect.height * 0.8;
@@ -125,18 +121,12 @@
           const y = top + (Math.sin(phase * Math.PI * 2 - Math.PI / 2) * 0.5 + 0.5) * usableH;
           const x = rect.width / 2;
           mover.style.transform = `translate(${x - 17}px, ${y - 17}px)`;
-          const dir = Math.sin(phase * Math.PI * 2) >= 0 ? "down" : "up";
-          if (dir !== lastPhase) {
-            lastPhase = dir;
-            setPrompt(dir === "down" ? "Вниз ↓" : "Вверх ↑");
-          }
         };
       },
     },
     leftright: {
       title: "Влево-вправо",
       hasSpeed: true,
-      prompts: [],
       build(playArea) {
         playArea.innerHTML = `
           <div class="track-line track-horiz"></div>
@@ -147,7 +137,6 @@
       startMotion(playArea, speed) {
         const mover = document.getElementById("mover");
         const period = { slow: 4200, medium: 2800, fast: 1700 }[speed] || 2800;
-        let lastPhase = null;
         return (t) => {
           const rect = playArea.getBoundingClientRect();
           const usableW = rect.width * 0.8;
@@ -156,18 +145,12 @@
           const x = left + (Math.sin(phase * Math.PI * 2 - Math.PI / 2) * 0.5 + 0.5) * usableW;
           const y = rect.height / 2;
           mover.style.transform = `translate(${x - 17}px, ${y - 17}px)`;
-          const dir = Math.sin(phase * Math.PI * 2) >= 0 ? "right" : "left";
-          if (dir !== lastPhase) {
-            lastPhase = dir;
-            setPrompt(dir === "right" ? "Вправо →" : "← Влево");
-          }
         };
       },
     },
     circular: {
       title: "Вращение",
       hasSpeed: true,
-      prompts: [],
       build(playArea) {
         playArea.innerHTML = `
           <div class="track-line track-circle"></div>
@@ -176,7 +159,6 @@
       startMotion(playArea, speed) {
         const mover = document.getElementById("mover");
         const period = { slow: 6000, medium: 4000, fast: 2500 }[speed] || 4000;
-        let announced = false;
         return (t) => {
           const rect = playArea.getBoundingClientRect();
           const cx = rect.width / 2;
@@ -186,10 +168,6 @@
           const x = cx + r * Math.cos(angle);
           const y = cy + r * Math.sin(angle);
           mover.style.transform = `translate(${x - 17}px, ${y - 17}px)`;
-          if (!announced) {
-            announced = true;
-            setPrompt("Следите по кругу");
-          }
         };
       },
     },
@@ -199,7 +177,6 @@
       build(playArea) {
         playArea.innerHTML = `
           <div class="focus-area">
-            <div class="focus-label">Смотрите на точку</div>
             <div class="focus-far" id="focusFar"></div>
             <div class="focus-near" id="focusNear"></div>
           </div>`;
@@ -216,17 +193,12 @@
           ctx.wasFar = isFar;
           far.classList.toggle("active", isFar);
           near.classList.toggle("active", !isFar);
-          setPrompt(isFar ? "Смотрите вдаль" : "Смотрите на близкую точку");
           beep(isFar ? 520 : 780);
           buzz(30);
         }
       },
     },
   };
-
-  function pick(arr) {
-    return arr[Math.floor(Math.random() * arr.length)];
-  }
 
   // ---------- DOM refs ----------
   const screens = {
@@ -252,13 +224,6 @@
   const stopBtn = document.getElementById("stopBtn");
   const repeatBtn = document.getElementById("repeatBtn");
   const homeBtn = document.getElementById("homeBtn");
-
-  function setPrompt(text) {
-    promptLabel.textContent = text;
-    promptLabel.classList.remove("pulse");
-    void promptLabel.offsetWidth;
-    promptLabel.classList.add("pulse");
-  }
 
   function showScreen(name) {
     Object.values(screens).forEach((s) => s.classList.remove("active"));
@@ -308,9 +273,8 @@
     def.build(playArea);
     if (def.hasSpeed) {
       def.startMotion(playArea, savedSpeed)(0);
-      promptLabel.classList.remove("pulse");
     }
-    promptLabel.textContent = "Готовы начать?";
+    promptLabel.textContent = "";
     timeLabel.textContent = formatTime((savedDur || 60) * 1000);
     ringFg.style.strokeDashoffset = "0";
   }
@@ -347,7 +311,7 @@
     setupControls.classList.add("hidden");
     doneControls.classList.add("hidden");
     runControls.classList.remove("hidden");
-    setPrompt(def.hasSpeed ? "Следите глазами за точкой" : "Начали!");
+    promptLabel.textContent = "";
 
     rafId = requestAnimationFrame(loop);
   }
