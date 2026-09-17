@@ -1,4 +1,4 @@
-const CACHE = "eye-trainer-v1";
+const CACHE = "eye-trainer-v2";
 const ASSETS = [
   "./",
   "./index.html",
