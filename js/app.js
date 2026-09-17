@@ -511,6 +511,9 @@
 
   function evaluateAssessment() {
     const score = ASSESSMENT_QUESTIONS.reduce((acc, q) => acc + (assessmentState[q.id] ?? 0), 0);
+
+    const hasLastOptionSelected = ASSESSMENT_QUESTIONS.some(q => assessmentState[q.id] === 2);
+
     localStorage.setItem(ASSESSMENT_KEY, JSON.stringify(assessmentState));
     updateAssessmentBanner(score);
 
@@ -520,20 +523,21 @@
     const quickBtn = document.getElementById("quickExBtn");
     recBlock.classList.remove("hidden");
 
-    if (score <= 2) {
-      recBadge.textContent = "🟢 Зелёная зона";
-      recText.textContent = "Всё хорошо, просто попей водички.";
-      quickBtn.classList.add("hidden");
-    } else if (score <= 5) {
-      recBadge.textContent = "🟡 Жёлтая зона";
-      recText.textContent = "Лови разминку для глаз (Моргание).";
-      quickExTarget = "blink";
-      quickBtn.classList.remove("hidden");
-    } else {
+    if (score > 5){
       recBadge.textContent = "🔴 Красная зона";
       recText.textContent = "Аварийный режим: фокус 20-20-20 и уходим от экрана на 5 минут.";
       quickExTarget = "focus";
       quickBtn.classList.remove("hidden");
+    } else if (hasLastOptionSelected || (score > 2 && score <= 5)) {
+      recBadge.textContent = "🟡 Жёлтая зона";
+      recText.textContent = "Лови разминку для глаз (Моргание).";
+      quickExTarget = "blink";
+      quickBtn.classList.remove("hidden");
+    }
+    else {
+      recBadge.textContent = "🟢 Зелёная зона";
+      recText.textContent = "Всё хорошо, просто попей водички.";
+      quickBtn.classList.add("hidden");
     }
   }
 
